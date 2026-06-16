@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: carousel
+      POSTGRES_PASSWORD: carousel
+      POSTGRES_DB: carousel_saas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://carousel:carousel@postgres:5432/carousel_saas
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      AI_PROVIDER: mock
+      STORAGE_PROVIDER: mock
+      MOCK_USER_ID: 00000000-0000-0000-0000-000000000001
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
